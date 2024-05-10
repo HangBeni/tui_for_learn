@@ -1,17 +1,9 @@
-pub enum CurrentScreen {
-    Home,
-    Course,
-    TimeTable
-}
+use tui_for_learn::util::types::{Course, CurrentScreen};
 
-pub struct Course {
-    pub  code:String,
-    pub name: String,
-    pub scheduled:String 
-}  
+
+
 pub struct App{
     pub current_screen: CurrentScreen,
-    pub courses: Vec<Course>
 }
 
 impl App {
@@ -19,7 +11,6 @@ impl App {
     pub fn new() -> App {
         App{ 
             current_screen: CurrentScreen::Home,
-            courses: Vec::new(),
         }
     }
 }
