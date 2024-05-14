@@ -1,0 +1,15 @@
+[
+  {
+    "id":1,
+    "code": "MÉAD123EA",
+    "lecture_type": "Theory",
+    "name":"Mérés és Adatgyujtés",
+    "length":"1.5h"
+  },{
+    "id":2,
+    "code": "MÉAD123LAB",
+    "lecture_type": "Lab",
+    "name":"Mérés és Adatgyujtés",
+    "length":"1h"
+  }
+]
