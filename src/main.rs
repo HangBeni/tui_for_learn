@@ -7,14 +7,16 @@ use crossterm::{
 };
 use ratatui::{
     backend::{Backend, CrosstermBackend},
-    terminal, Terminal,
+    terminal,
+    widgets::{List, ListState},
+    Terminal,
 };
-use tui_for_learn::util::types::{Course, CurrentScreen};
+use tui_for_learn::util::{
+    db::read_courses,
+    types::{Course, CurrentScreen},
+};
 
-use crate::{
-    app::{App},
-    ui::ui,
-};
+use crate::{app::App, ui::ui};
 use std::{error::Error, io};
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -41,8 +43,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 //Az app folyamatát kezeli (lap váltás stb.)
 fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<bool> {
+    let mut courses_list = ListState::default();
+    courses_list.select(Some(0));
+
     loop {
-        terminal.draw(|f| ui(f, app))?;
+        terminal.draw(|f| ui(f, app, &mut courses_list))?;
 
         if let Event::Key(key) = event::read()? {
             if key.kind == event::KeyEventKind::Release {
@@ -60,6 +65,26 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     KeyCode::Char('1') => app.current_screen = CurrentScreen::Home,
                     KeyCode::Char('3') => app.current_screen = CurrentScreen::TimeTable,
                     KeyCode::Char('q') => app.current_screen = CurrentScreen::Exiting,
+                    KeyCode::Up => {
+                        if let Some(selected) = courses_list.selected() {
+                            let course_list_length = read_courses().expect("can fetch").len();
+                            if course_list_length > 0 {
+                                courses_list.select(Some(selected - 1));
+                            } else {
+                                courses_list.select(Some(course_list_length - 1));
+                            }
+                        }
+                    }
+                    KeyCode::Down => {
+                        if let Some(selected) = courses_list.selected() {
+                            let course_length = read_courses().expect("can fetch").len();
+                            if selected >= course_length - 1 {
+                                courses_list.select(Some(0));
+                            } else {
+                                courses_list.select(Some(selected + 1));
+                            }
+                        }
+                    }
                     _ => {}
                 },
                 CurrentScreen::TimeTable => match key.code {
