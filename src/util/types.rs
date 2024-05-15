@@ -10,7 +10,7 @@ use thiserror::Error;
 
 #[derive(Serialize, Deserialize,Clone, Display)]
 pub enum Lecture {
-    #[strum(serialize = "Előadás")]
+    #[strum(serialize = "Eloadás")]
     Theory,
     #[strum(serialize = "Gyakorlat")]
     Practical,
@@ -27,7 +27,22 @@ pub enum CurrentScreen {
     Home,
     Courses,
     TimeTable,
-    Exiting
+    Exiting,
+    Login
+}
+
+#[derive(Copy,Clone,Debug)]
+pub enum LoginHighlights{
+    Neptun{valid:LoginValidation},
+    Password{valid:LoginValidation},
+    None
+}
+
+#[derive(Copy,Clone,Debug)]
+pub enum LoginValidation {
+    Valid,
+    NotValid,
+    Pending
 }
 
 #[derive(Error, Debug)]
@@ -41,10 +56,11 @@ pub enum Error {
 impl From<CurrentScreen> for usize {
     fn from(value: CurrentScreen) -> usize {
         match value {
+            CurrentScreen::Login => 0,
             CurrentScreen::Home => 1,
             CurrentScreen::Courses => 2,
             CurrentScreen::TimeTable => 3,
-            CurrentScreen::Exiting => 4,
+            CurrentScreen::Exiting => 4
         }
     }
 }
@@ -63,5 +79,8 @@ pub struct User {
    pub password: String, // jó lenne hashelve
    pub name: String,
    pub role: Role,
+   pub uni: String,
+   pub faculty: String,
+   pub major: String,
    pub user_schedule: Vec<String>, //az órák kódját kell eltárolni hogy ha a kurzus változik akkor változzon a hivatkozással
 }
