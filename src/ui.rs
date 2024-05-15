@@ -1,17 +1,16 @@
-use std::rc::Rc;
-
 use ratatui::{
-    buffer::Cell,
-    layout::{Alignment, Constraint, Direction, Layout},
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
-    text::{Line, Span, Text},
+    text::{Line, Span},
     widgets::{
-        block::title, Block, BorderType, Borders, List, ListItem, ListState, Paragraph, Row, Table,
-        Tabs,
+        Block, BorderType, Borders, List, ListItem, ListState, Paragraph, Row, Table, Tabs, Wrap,
     },
     Frame,
 };
-use tui_for_learn::util::{db::read_courses, types::CurrentScreen};
+use tui_for_learn::util::{
+    db::read_courses,
+    types::{CurrentScreen, LoginHighlights, LoginValidation},
+};
 
 use crate::app::App;
 
@@ -32,7 +31,7 @@ pub fn ui(f: &mut Frame, app: &App, courses: &mut ListState) {
     let active_menu: &CurrentScreen = &app.current_screen;
 
     let menu = menu_titles.iter().map(|t| {
-        let (first, rest) = t.split_at(1);
+        let (first, rest) = t.split_at(3);
 
         Line::from(vec![
             Span::styled(
@@ -46,7 +45,7 @@ pub fn ui(f: &mut Frame, app: &App, courses: &mut ListState) {
     });
 
     let tabs = Tabs::new(menu)
-        .select((*active_menu).into())
+        .select(*active_menu as usize)
         .block(Block::default().title("Menu").borders(Borders::ALL))
         .style(Style::default().fg(Color::White))
         .highlight_style(Style::default().fg(Color::LightBlue))
@@ -68,6 +67,76 @@ pub fn ui(f: &mut Frame, app: &App, courses: &mut ListState) {
 
     //A képernyő kiválasztása
     match app.current_screen {
+        CurrentScreen::Login => {
+            let login_block = Block::default()
+                .title("Enter a new key-value pair")
+                .borders(Borders::NONE)
+                .style(Style::default().bg(Color::DarkGray));
+
+            let area = centered_rect(60, 25, f.size());
+
+            f.render_widget(login_block, area);
+
+            let login_chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .margin(1)
+                .constraints([Constraint::Percentage(10),Constraint::Percentage(40),Constraint::Percentage(10), Constraint::Percentage(40)])
+                .split(area);
+
+            let mut code_block = Block::default()
+                .title("Neptun Code")
+                .borders(Borders::ALL)
+                .border_type(BorderType::Double);
+            let mut password_block = Block::default()
+                .title("Password")
+                .borders(Borders::ALL)
+                .border_type(BorderType::Double);
+
+            let active_style = Style::default().bg(Color::LightMagenta).fg(Color::Black);
+
+            match app.current_login_parameter {
+                LoginHighlights::Neptun { valid } => {
+                    match valid {
+                        
+                        LoginValidation::Valid => {
+
+                        },
+                        LoginValidation::NotValid => {
+
+                        },
+                        LoginValidation::Pending => {
+
+                        },
+                    }
+                    code_block = code_block.style(active_style);
+                }
+                LoginHighlights::Password { valid } => {
+                    match valid {
+                        
+                        LoginValidation::Valid => {
+
+                        },
+                        LoginValidation::NotValid => {
+
+                        },
+                        LoginValidation::Pending => {
+
+                        },
+                    }
+                    password_block = password_block.style(active_style);
+                }
+                LoginHighlights::None => {
+                    code_block = code_block.style(Style::default());
+                    password_block = password_block.style(Style::default())
+                }
+            }
+
+            let code_text = Paragraph::new(app.code_input.clone()).block(code_block);
+            f.render_widget(code_text, login_chunks[1]);
+
+            let password_text = Paragraph::new(app.password_input.clone()).block(password_block);
+            f.render_widget(password_text, login_chunks[3])
+        }
         CurrentScreen::Home => {
             f.render_widget(render_home(), layout_area[1]);
         }
@@ -81,12 +150,13 @@ pub fn ui(f: &mut Frame, app: &App, courses: &mut ListState) {
 
             f.render_stateful_widget(list_of_courses, courses_layout[0], courses);
             f.render_widget(table, courses_layout[1]);
-
         }
         CurrentScreen::TimeTable => {
             f.render_widget(render_time_table(), layout_area[1]);
         }
-        _ => {}
+        CurrentScreen::Exiting => {
+            f.render_widget(exit_popup(), centered_rect(40, 20, f.size()));
+        }
     }
 }
 
@@ -114,12 +184,12 @@ fn render_courses<'a>(courses_state: &ListState) -> (List<'a>, Table<'a>) {
         .border_type(BorderType::Plain);
 
     let course_list = read_courses().expect("can fetch courses");
-    
+
     let course_tags: Vec<ListItem> = course_list
         .iter()
         .map(|item| {
             ListItem::new(Line::from(vec![Span::styled(
-                item.name.clone(),
+                item.code.clone(),
                 Style::default(),
             )]))
         })
@@ -149,17 +219,16 @@ fn render_courses<'a>(courses_state: &ListState) -> (List<'a>, Table<'a>) {
             selected_course.lecture_type.to_string(),
         ])],
         &[
-            Constraint::Percentage(10),
-            Constraint::Percentage(25),
-            Constraint::Percentage(25),
-            Constraint::Percentage(10)
+            Constraint::Percentage(8),
+            Constraint::Percentage(45),
+            Constraint::Percentage(30),
+            Constraint::Percentage(17),
         ],
-    ).header(Row::new(vec![
-        "ID",
-        "Név",
-        "Kód",
-        "Típus"
-    ]).style(Style::default().add_modifier(Modifier::BOLD)))
+    )
+    .header(
+        Row::new(vec!["ID", "Name", "Code", "Type"])
+            .style(Style::default().add_modifier(Modifier::BOLD)),
+    )
     .block(
         Block::default()
             .borders(Borders::ALL)
@@ -184,4 +253,38 @@ fn render_time_table<'a>() -> Paragraph<'a> {
                 .border_type(BorderType::Plain),
         );
     time_table
+}
+
+fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
+    // Cut the given rectangle into three vertical pieces
+    let popup_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Percentage((100 - percent_y) / 2),
+            Constraint::Percentage(percent_y),
+            Constraint::Percentage((100 - percent_y) / 2),
+        ])
+        .split(r);
+
+    // Then cut the middle vertical piece into three width-wise pieces
+    Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage((100 - percent_x) / 2),
+            Constraint::Percentage(percent_x),
+            Constraint::Percentage((100 - percent_x) / 2),
+        ])
+        .split(popup_layout[1])[1] // Return the middle chunk
+}
+
+fn exit_popup() -> Paragraph<'static> {
+    let popup_block = Block::default()
+        .title("Y/N")
+        .borders(Borders::NONE)
+        .style(Style::default().bg(Color::DarkGray));
+
+    // the `trim: false` will stop the text from being cut off when over the edge of the block
+    Paragraph::new("Ki akarsz lépni?")
+        .block(popup_block)
+        .wrap(Wrap { trim: false })
 }
