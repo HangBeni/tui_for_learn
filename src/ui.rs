@@ -9,12 +9,12 @@ use ratatui::{
 };
 use tui_for_learn::util::{
     db::read_courses,
-    types::{CurrentScreen, LoginHighlights, LoginValidation},
+    types::{CurrentScreen, LoginHighlight, LoginState},
 };
 
 use crate::app::App;
 
-pub fn ui(f: &mut Frame, app: &App, courses: &mut ListState) {
+pub fn ui(f: &mut Frame, app: &App, courses: &mut ListState, login_state: &mut LoginState) {
     //Base layout
     let layout_area = Layout::default()
         .direction(Direction::Vertical)
@@ -73,14 +73,19 @@ pub fn ui(f: &mut Frame, app: &App, courses: &mut ListState) {
                 .borders(Borders::NONE)
                 .style(Style::default().bg(Color::DarkGray));
 
-            let area = centered_rect(60, 25, f.size());
+            let area = centered_rect(60, 50, f.size());
 
             f.render_widget(login_block, area);
 
             let login_chunks = Layout::default()
                 .direction(Direction::Vertical)
-                .margin(1)
-                .constraints([Constraint::Percentage(10),Constraint::Percentage(40),Constraint::Percentage(10), Constraint::Percentage(40)])
+                .margin(2)
+                .constraints([
+                    Constraint::Percentage(10),
+                    Constraint::Percentage(30),
+                    Constraint::Percentage(10),
+                    Constraint::Percentage(30),
+                ])
                 .split(area);
 
             let mut code_block = Block::default()
@@ -92,47 +97,52 @@ pub fn ui(f: &mut Frame, app: &App, courses: &mut ListState) {
                 .borders(Borders::ALL)
                 .border_type(BorderType::Double);
 
-            let active_style = Style::default().bg(Color::LightMagenta).fg(Color::Black);
+             
+
+            let default_style = Style::default().bg(Color::LightMagenta).fg(Color::Black);
+            let active_error_style = Style::default().bg(Color::LightRed);
+            let active_passed_style = Style::default().bg(Color::LightGreen);
 
             match app.current_login_parameter {
-                LoginHighlights::Neptun { valid } => {
-                    match valid {
-                        
-                        LoginValidation::Valid => {
-
-                        },
-                        LoginValidation::NotValid => {
-
-                        },
-                        LoginValidation::Pending => {
-
-                        },
+                LoginHighlight::Neptun => match login_state.neptun.contains("ERROR") {
+                    true => {
+                        code_block = code_block
+                            .style(active_error_style)
+                            .border_style(Color::Red);
                     }
-                    code_block = code_block.style(active_style);
-                }
-                LoginHighlights::Password { valid } => {
-                    match valid {
-                        
-                        LoginValidation::Valid => {
-
-                        },
-                        LoginValidation::NotValid => {
-
-                        },
-                        LoginValidation::Pending => {
-
-                        },
+                    false => {
+                        code_block = code_block
+                            .style(active_passed_style)
+                            .border_style(Color::Green);
                     }
-                    password_block = password_block.style(active_style);
-                }
-                LoginHighlights::None => {
-                    code_block = code_block.style(Style::default());
-                    password_block = password_block.style(Style::default())
+                },
+                LoginHighlight::Password => match login_state.password.contains("ERROR") {
+                    true => { 
+                        password_block = password_block
+                            .style(active_error_style)
+                            .border_style(Color::Red);
+                    }
+                    false => {
+                        password_block = password_block
+                            .style(active_passed_style)
+                            .border_style(Color::Green);
+                    }
+                },
+
+                LoginHighlight::None => {
+                    code_block = code_block.style(default_style);
+                    password_block = password_block.style(default_style)
                 }
             }
 
+            let status_paraghraph_neptun = Paragraph::new(login_state.neptun.to_owned());
+            f.render_widget(status_paraghraph_neptun, login_chunks[0]);
+            
             let code_text = Paragraph::new(app.code_input.clone()).block(code_block);
             f.render_widget(code_text, login_chunks[1]);
+
+            let status_paraghraph_password = Paragraph::new(login_state.password.to_owned());
+            f.render_widget(status_paraghraph_password, login_chunks[2]);
 
             let password_text = Paragraph::new(app.password_input.clone()).block(password_block);
             f.render_widget(password_text, login_chunks[3])
