@@ -5,6 +5,7 @@ use ratatui::widgets::ListState;
 use super::types::Course;
 use super::types::Error;
 use super::types::User;
+
 const COURSES_PATH: &str = "./src/db/courses.json";
 const USERS_PATH: &str = "./src/db/users.json";
 
@@ -35,4 +36,47 @@ pub fn remove_course(course_list: &mut ListState) -> Result<(), Error> {
         course_list.select(Some(selected - 1))
     }
     Ok(())
+}
+
+pub fn check_code(code: &str) -> Result<&str, &str> {
+    if code.chars().all(|ch| ch.is_alphanumeric()) {
+        if code.len() == 6 {
+            Ok("Neptun Code")
+        } else {
+            Err("The code is longer than 6 characters!ERROR")
+        }
+    } else {
+        Err("Special character is not allowed in the Neptun code!ERROR")
+    }
+}
+
+pub fn check_password(password: &str) -> Result<&str, &str> {
+
+    if password.len() >= 4 && password.chars().all(|ch| ch.is_alphanumeric()) {
+        Ok("Password")
+
+    } else if !password.chars().all(|ch| ch.is_alphanumeric()) && password.len() <= 3 {
+        Err("Too short and there is a special character!ERROR")
+
+    } else if password.len() <= 3 {
+        Err("Too short the password, at least 4 character!ERROR")
+
+    }else if !password.chars().all(|ch| ch.is_alphanumeric()) {
+        Err("Special character!ERROR")
+
+    } else {
+        Err("Something wrong!ERROR")
+    }
+}
+
+pub fn logger(code: &str, password: &str) -> Option<User> {
+    if code.contains("ERROR") || password.contains("ERROR") {
+        None
+    } else {
+        let users = read_users().unwrap();
+        users
+            .iter()
+            .find(|user| user.code.to_lowercase() == code.to_lowercase() && user.password.to_lowercase() == password.to_lowercase())
+            .cloned()
+    }
 }
