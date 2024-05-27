@@ -10,11 +10,11 @@ use thiserror::Error;
 
 #[derive(Serialize, Deserialize, Clone, Display)]
 pub enum Lecture {
-    #[strum(serialize = "Eloadás")]
+    #[strum(serialize = "Theory")]
     Theory,
-    #[strum(serialize = "Gyakorlat")]
+    #[strum(serialize = "Practical")]
     Practical,
-    #[strum(serialize = "Labor")]
+    #[strum(serialize = "Lab")]
     Lab,
 }
 #[derive(Serialize, Deserialize, Clone)]
@@ -24,11 +24,11 @@ pub enum Role {
 }
 #[derive(Copy, Clone, Debug)]
 pub enum CurrentScreen {
+    Login,
     Home,
     Courses,
     TimeTable,
-    Exiting,
-    Login,
+    Exiting
 }
 
 impl From<CurrentScreen> for usize {
@@ -92,4 +92,22 @@ pub struct User {
     pub faculty: String,
     pub major: String,
     pub user_schedule: Vec<String>, //az órák kódját kell eltárolni hogy ha a kurzus változik akkor változzon a hivatkozással
+}
+
+pub struct App {
+    pub current_screen: CurrentScreen,
+    pub current_login_parameter: LoginHighlight,
+    pub code_input: String,
+    pub password_input: String,
+}
+
+impl App {
+    pub fn new() -> App {
+        App {
+            current_screen: CurrentScreen::Login,
+            current_login_parameter: LoginHighlight::Neptun,
+            code_input: String::new(),
+            password_input: String::new(),
+        }
+    }
 }
