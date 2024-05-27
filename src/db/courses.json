@@ -11,5 +11,18 @@
     "lecture_type": "Lab",
     "name":"Mérés és Adatgyujtés",
     "length":"1h"
+  },
+  {
+    "id":3,
+    "code": "MAT123EA",
+    "lecture_type": "Theory",
+    "name":"Matematika",
+    "length":"1.5h"
+  }, {
+    "id":4,
+    "code": "MAT123GYAK",
+    "lecture_type": "Practical",
+    "name":"Matematika",
+    "length":"1h"
   }
 ]
