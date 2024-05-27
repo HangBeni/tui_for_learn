@@ -1,18 +1,16 @@
 use ratatui::{
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Modifier, Style},
-    text::{Line, Span},
-    widgets::{
-        Block, BorderType, Borders, List, ListItem, ListState, Paragraph, Row, Table, Tabs, Wrap,
-    },
+    layout::{Constraint, Direction, Layout},
+    widgets::ListState,
     Frame,
 };
-use tui_for_learn::util::{
-    db::read_courses,
-    types::{CurrentScreen, LoginHighlight, LoginState},
+use tui_for_learn::{
+    components::{c_rect::centered_rect, exit::exit_popup, nav::render_nav, status::status_bar},
+    pages::{
+        courses::render_courses, home::render_home, login::render_login,
+        timetable::render_time_table,
+    },
+    util::types::{App, CurrentScreen, LoginState},
 };
-
-use crate::app::App;
 
 pub fn ui(f: &mut Frame, app: &App, courses: &mut ListState, login_state: &mut LoginState) {
     //Base layout
@@ -20,147 +18,27 @@ pub fn ui(f: &mut Frame, app: &App, courses: &mut ListState, login_state: &mut L
         .direction(Direction::Vertical)
         .margin(3)
         .constraints([
-            Constraint::Length(3),
-            Constraint::Min(2),
-            Constraint::Length(3),
+            Constraint::Percentage(30),
+            Constraint::Fill(1),
+            Constraint::Percentage(10),
         ])
         .split(f.size());
 
-    //Nav Widget
-    let menu_titles = vec!["(1) Home", "(2) Courses", "(3) Timetable", "(q) Quit"];
-    let active_menu: &CurrentScreen = &app.current_screen;
-
-    let menu = menu_titles.iter().map(|t| {
-        let (first, rest) = t.split_at(3);
-
-        Line::from(vec![
-            Span::styled(
-                first,
-                Style::default()
-                    .fg(Color::LightBlue)
-                    .add_modifier(Modifier::UNDERLINED),
-            ),
-            Span::styled(rest, Style::default().fg(Color::White)),
-        ])
-    });
-
-    let tabs = Tabs::new(menu)
-        .select(*active_menu as usize)
-        .block(Block::default().title("Menu").borders(Borders::ALL))
-        .style(Style::default().fg(Color::White))
-        .highlight_style(Style::default().fg(Color::LightBlue))
-        .divider("|");
-
-    //Status Widget
-    let status_bar: Line = vec![
-        "Location".into(),
-        "|".into(),
-        "Command status".into(),
-        "|".into(),
-        "Current Time".into(),
-    ]
-    .into();
-
     //Alap layout
-    f.render_widget(tabs, layout_area[0]);
-    f.render_widget(status_bar, layout_area[2]);
+    if login_state.user.is_some() {
+        f.render_widget(render_nav(app.current_screen), layout_area[0]);
+        f.render_widget(status_bar(), layout_area[2]);
+    }
 
     //A képernyő kiválasztása
     match app.current_screen {
         CurrentScreen::Login => {
-            let login_block = Block::default()
-                .title("Enter a new key-value pair")
-                .borders(Borders::NONE)
-                .style(Style::default().bg(Color::DarkGray));
-
-            let area = centered_rect(60, 50, f.size());
-
-            f.render_widget(login_block, area);
-
-            let login_chunks = Layout::default()
-                .direction(Direction::Vertical)
-                .margin(2)
-                .constraints([
-                    Constraint::Percentage(10),
-                    Constraint::Percentage(30),
-                    Constraint::Percentage(10),
-                    Constraint::Percentage(30),
-                ])
-                .split(area);
-
-            let mut code_block = Block::default()
-                .title("Neptun Code")
-                .borders(Borders::ALL)
-                .border_type(BorderType::Double);
-            let mut password_block = Block::default()
-                .title("Password")
-                .borders(Borders::ALL)
-                .border_type(BorderType::Double);
-
-             
-
-            let default_style = Style::default().bg(Color::LightMagenta).fg(Color::Black);
-            let active_error_style = Style::default().bg(Color::LightRed);
-            let active_passed_style = Style::default().bg(Color::LightGreen);
-
-            match app.current_login_parameter {
-                LoginHighlight::Neptun => match login_state.neptun.contains("ERROR") {
-                    true => {
-                        code_block = code_block
-                            .style(active_error_style)
-                            .border_style(Color::Red);
-                    }
-                    false => {
-                        code_block = code_block
-                            .style(active_passed_style)
-                            .border_style(Color::Green);
-                    }
-                },
-                LoginHighlight::Password => match login_state.password.contains("ERROR") {
-                    true => { 
-                        password_block = password_block
-                            .style(active_error_style)
-                            .border_style(Color::Red);
-                    }
-                    false => {
-                        password_block = password_block
-                            .style(active_passed_style)
-                            .border_style(Color::Green);
-                    }
-                },
-
-                LoginHighlight::None => {
-                    code_block = code_block.style(default_style);
-                    password_block = password_block.style(default_style)
-                }
-            }
-
-            let status_paraghraph_neptun = Paragraph::new(login_state.neptun.to_owned());
-            f.render_widget(status_paraghraph_neptun, login_chunks[0]);
-            
-            let code_text = Paragraph::new(app.code_input.clone()).block(code_block);
-            f.render_widget(code_text, login_chunks[1]);
-
-            let status_paraghraph_password = Paragraph::new(login_state.password.to_owned());
-            f.render_widget(status_paraghraph_password, login_chunks[2]);
-
-            let password_text = Paragraph::new(app.password_input.clone()).block(password_block);
-            f.render_widget(password_text, login_chunks[3])
+            render_login(f, app, login_state);
         }
         CurrentScreen::Home => {
-            f.render_widget(render_home(), layout_area[1]);
+            f.render_widget(render_home(login_state.user.clone()), layout_area[1]);
         }
-        CurrentScreen::Courses => {
-            let courses_layout = Layout::default()
-                .direction(Direction::Horizontal)
-                .constraints([Constraint::Percentage(20), Constraint::Percentage(80)].as_ref())
-                .split(layout_area[1]);
-
-            let (list_of_courses, table) = render_courses(&courses);
-
-            f.render_stateful_widget(list_of_courses, courses_layout[0], courses);
-            f.render_widget(table, courses_layout[1]);
-        }
+        CurrentScreen::Courses => render_courses(f, courses, layout_area),
         CurrentScreen::TimeTable => {
             f.render_widget(render_time_table(), layout_area[1]);
         }
@@ -168,133 +46,4 @@ pub fn ui(f: &mut Frame, app: &App, courses: &mut ListState, login_state: &mut L
             f.render_widget(exit_popup(), centered_rect(40, 20, f.size()));
         }
     }
-}
-
-//Home Widgets
-fn render_home<'a>() -> Paragraph<'a> {
-    let home = Paragraph::new("Hang Benjámin")
-        .style(Style::default().fg(Color::LightCyan))
-        .alignment(Alignment::Center)
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .style(Style::default().fg(Color::White))
-                .title("Home")
-                .border_type(BorderType::Plain),
-        );
-    home
-}
-
-//Courses Widgets
-fn render_courses<'a>(courses_state: &ListState) -> (List<'a>, Table<'a>) {
-    let courses = Block::default()
-        .borders(Borders::ALL)
-        .style(Style::default().fg(Color::White))
-        .title("Courses")
-        .border_type(BorderType::Plain);
-
-    let course_list = read_courses().expect("can fetch courses");
-
-    let course_tags: Vec<ListItem> = course_list
-        .iter()
-        .map(|item| {
-            ListItem::new(Line::from(vec![Span::styled(
-                item.code.clone(),
-                Style::default(),
-            )]))
-        })
-        .collect();
-
-    let selected_course = course_list
-        .get(
-            courses_state
-                .selected()
-                .expect("There is always a selected course"),
-        )
-        .expect("Exists")
-        .clone();
-
-    let list = List::new(course_tags).block(courses).highlight_style(
-        Style::default()
-            .bg(Color::Blue)
-            .fg(Color::Green)
-            .add_modifier(Modifier::BOLD),
-    );
-
-    let details = Table::new(
-        [Row::new(vec![
-            selected_course.id.to_string(),
-            selected_course.name,
-            selected_course.code,
-            selected_course.lecture_type.to_string(),
-        ])],
-        &[
-            Constraint::Percentage(8),
-            Constraint::Percentage(45),
-            Constraint::Percentage(30),
-            Constraint::Percentage(17),
-        ],
-    )
-    .header(
-        Row::new(vec!["ID", "Name", "Code", "Type"])
-            .style(Style::default().add_modifier(Modifier::BOLD)),
-    )
-    .block(
-        Block::default()
-            .borders(Borders::ALL)
-            .style(Style::default().fg(Color::White))
-            .title("Details")
-            .border_type(BorderType::Plain),
-    );
-
-    (list, details)
-}
-
-//TimeTable Widgets
-fn render_time_table<'a>() -> Paragraph<'a> {
-    let time_table = Paragraph::new("Hang Benjámin")
-        .style(Style::default().fg(Color::LightCyan))
-        .alignment(Alignment::Center)
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .style(Style::default().fg(Color::White))
-                .title("Timetable")
-                .border_type(BorderType::Plain),
-        );
-    time_table
-}
-
-fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
-    // Cut the given rectangle into three vertical pieces
-    let popup_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Percentage((100 - percent_y) / 2),
-            Constraint::Percentage(percent_y),
-            Constraint::Percentage((100 - percent_y) / 2),
-        ])
-        .split(r);
-
-    // Then cut the middle vertical piece into three width-wise pieces
-    Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Percentage((100 - percent_x) / 2),
-            Constraint::Percentage(percent_x),
-            Constraint::Percentage((100 - percent_x) / 2),
-        ])
-        .split(popup_layout[1])[1] // Return the middle chunk
-}
-
-fn exit_popup() -> Paragraph<'static> {
-    let popup_block = Block::default()
-        .title("Y/N")
-        .borders(Borders::NONE)
-        .style(Style::default().bg(Color::DarkGray));
-
-    // the `trim: false` will stop the text from being cut off when over the edge of the block
-    Paragraph::new("Ki akarsz lépni?")
-        .block(popup_block)
-        .wrap(Wrap { trim: false })
 }
