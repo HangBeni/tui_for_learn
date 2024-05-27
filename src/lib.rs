@@ -1,3 +1,3 @@
 pub mod util;
-
-//use util::types::Course;
+pub mod components;
+pub mod pages;
