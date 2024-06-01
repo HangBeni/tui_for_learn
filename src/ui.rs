@@ -18,7 +18,7 @@ pub fn ui(f: &mut Frame, app: &App, courses: &mut ListState, login_state: &mut L
         .direction(Direction::Vertical)
         .margin(3)
         .constraints([
-            Constraint::Fill(1),
+            Constraint::Length(3),
             Constraint::Percentage(80),
             Constraint::Length(2),
         ])
