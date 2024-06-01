@@ -52,7 +52,7 @@ pub fn check_code(code: &str) -> Result<&str, &str> {
 
 pub fn check_password(password: &str) -> Result<&str, &str> {
 
-    if password.len() >= 4 && password.chars().all(|ch| ch.is_alphanumeric()) {
+    if password.len() > 3 && password.chars().all(|ch| ch.is_alphanumeric()) {
         Ok("Password")
 
     } else if !password.chars().all(|ch| ch.is_alphanumeric()) && password.len() <= 3 {
