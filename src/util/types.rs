@@ -72,13 +72,18 @@ pub enum Error {
     #[error("error parsing the DB file: {0}")]
     ParseDBError(#[from] serde_json::Error),
 }
-
+#[derive(Serialize, Deserialize, Clone)]
+pub struct CourseTime { // Órák meghirdetett idopontjának struktúrája
+    pub day: String,
+    pub time: String
+} 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Course {
     pub id: usize,
     pub code: String, // egyedi azon. név+type
     pub lecture_type: Lecture,
     pub name: String,
+    pub takes_on: Vec<CourseTime>,
     pub length: String,
 }
 #[derive(Serialize, Deserialize, Clone)]
