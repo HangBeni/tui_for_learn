@@ -10,7 +10,7 @@ use ratatui::{
     Terminal,
 };
 use tui_for_learn::util::{
-    db::read_courses,
+    db::{read_courses, save_user},
     handlers::{handle_deletion, handle_input, handle_navigation, handle_validation},
     types::{App, CurrentScreen, LoginHighlight, LoginState},
 };
@@ -28,7 +28,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut app = App::new();
     let _res = run_app(&mut terminal, &mut app);
-
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
     terminal.show_cursor()?;
@@ -114,6 +113,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 //Exiting Event Handling
                 CurrentScreen::Exiting => match key.code {
                     KeyCode::Char('y') | KeyCode::Char('q') => {
+                        let _ = save_user(&login_state.user.unwrap());
                         return Ok(true);
                     }
                     _ => {

@@ -1,4 +1,6 @@
 use std::fs;
+use std::fs::OpenOptions;
+use std::io;
 
 use ratatui::widgets::ListState;
 
@@ -79,4 +81,22 @@ pub fn logger(code: &str, password: &str) -> Option<User> {
             .find(|user| user.code.to_lowercase() == code.to_lowercase() && user.password.to_lowercase() == password.to_lowercase())
             .cloned()
     }
+}
+
+
+pub fn save_user(current_user: &User) -> Result<(), io::Error> {
+  
+    let mut users = read_users().unwrap();
+    let _ = users.iter_mut().map(|user| {
+        if user.code == current_user.code {
+            user.user_schedule = current_user.user_schedule.clone();
+        }
+    }); 
+
+    let file = OpenOptions::new()
+        .write(true)
+        .open(USERS_PATH)?;
+    
+    serde_json::to_writer_pretty(file, &users)?;
+    Ok(())
 }
