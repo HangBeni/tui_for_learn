@@ -43,7 +43,7 @@ impl From<CurrentScreen> for usize {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug,PartialEq)]
 pub enum LoginHighlight {
     Neptun,
     Password,
