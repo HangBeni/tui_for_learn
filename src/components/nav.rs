@@ -1,7 +1,7 @@
 use ratatui::{
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Padding, Tabs},
+    widgets::{Block, Tabs},
 };
 
 use crate::util::types::CurrentScreen;
@@ -31,4 +31,4 @@ pub fn render_nav<'a>(screen: CurrentScreen) -> Tabs<'a> {
         .padding("  ", "  ");
 
     tabs
-}   
+}
