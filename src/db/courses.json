@@ -1,50 +1,66 @@
 [
   {
     "id": 1,
-    "code": "MÉAD123EA",
+    "code": "MEAD123EA",
     "lecture_type": "Theory",
     "name": "Mérés és Adatgyujtés",
-    "takes_on": [{ "day": "Monday", "time": "7:45" }],
+    "takes_on": { "day": "Monday", "time": "7:45" },
     "length": "1.5h"
   },
   {
     "id": 2,
-    "code": "MÉAD123LAB",
+    "code": "MEAD123LAB",
     "lecture_type": "Lab",
     "name": "Mérés és Adatgyujtés",
-    "takes_on": [{ "day": "Monday", "time": "19:30" }],
+    "takes_on": { "day": "Monday", "time": "19:30" },
     "length": "1.5h"
   },
   {
     "id": 3,
-    "code": "MAT123EA",
-    "lecture_type": "Theory",
-    "name": "Matematika",
-    "takes_on": [{ "day": "Tuesday", "time": "14:00" }],
+    "code": "MEAD123LAB",
+    "lecture_type": "Lab",
+    "name": "Mérés és Adatgyujtés",
+    "takes_on":{ "day": "Tuesday", "time": "19:30" },
     "length": "1.5h"
   },
   {
     "id": 4,
-    "code": "MAT123GYAK",
-    "lecture_type": "Practical",
+    "code": "MAT123EA",
+    "lecture_type": "Theory",
     "name": "Matematika",
-    "takes_on": [{ "day": "Wednesday", "time": "14:00" }],
+    "takes_on": { "day": "Tuesday", "time": "14:00" },
     "length": "1.5h"
   },
   {
     "id": 5,
-    "code": "DUAI123EA",
-    "lecture_type": "Theory",
-    "name": "Duális képzés",
-    "takes_on": [{ "day": "Friday", "time": "14:00" }],
+    "code": "MAT123GYAK",
+    "lecture_type": "Practical",
+    "name": "Matematika",
+    "takes_on": { "day": "Wednesday", "time": "14:00" },
     "length": "1.5h"
   },
   {
     "id": 6,
+    "code": "MAT123GYAK",
+    "lecture_type": "Practical",
+    "name": "Matematika",
+    "takes_on":{ "day": "Thursday", "time": "14:00" },
+    "length": "1.5h"
+  },
+  {
+    "id": 7,
+    "code": "DUAI123EA",
+    "lecture_type": "Theory",
+    "name": "Dualis kepzes",
+    "takes_on": { "day": "Friday", "time": "14:00" },
+    "length": "1.5h"
+  },
+  {
+    "id": 8,
     "code": "DUAI123GYAK",
     "lecture_type": "Practical",
-    "name": "Duális képzés",
-    "takes_on": [{ "day": "Friday", "time": "15:30" }],
+    "name": "Dualis kepzes",
+    "takes_on": { "day": "Friday", "time": "15:30" },
     "length": "1.5h"
   }
 ]
