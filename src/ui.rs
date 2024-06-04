@@ -6,7 +6,9 @@ use ratatui::{
 use tui_for_learn::{
     components::{c_rect::centered_rect, exit::exit_popup, nav::render_nav, status::status_bar},
     pages::{
-        courses::render_courses, home::render_home, login::render_login,
+        courses::{render_courses, render_courses_with_taked},
+        home::render_home,
+        login::render_login,
         timetable::render_time_table,
     },
     util::types::{App, CurrentScreen, LoginState},
@@ -38,7 +40,15 @@ pub fn ui(f: &mut Frame, app: &App, courses: &mut ListState, login_state: &mut L
         CurrentScreen::Home => {
             f.render_widget(render_home(login_state.user.clone()), layout_area[1]);
         }
-        CurrentScreen::Courses => render_courses(f, courses, layout_area),
+        CurrentScreen::Courses => match login_state.user.clone() {
+            Some(mut user) => match user.user_schedule.len() {
+                0 => render_courses(f, courses, layout_area),
+                _ => {
+                    render_courses_with_taked(f, courses, layout_area, &mut user, app.current_course_list);
+                }
+            },
+            _ => {}
+        },
         CurrentScreen::TimeTable => {
             f.render_widget(render_time_table(), layout_area[1]);
         }
