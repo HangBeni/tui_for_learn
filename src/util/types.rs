@@ -3,10 +3,13 @@ use strum::Display;
 // az enum értékekhez lehet string értéket is társítani -- cargo add strum --features derive,strum_macros
 //  #[strum(serialize = "érték")]
 
+use core::fmt;
 use std::io;
 
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
+
+use super::db::get_course;
 
 #[derive(Serialize, Deserialize, Clone, Display)]
 pub enum Lecture {
@@ -28,7 +31,7 @@ pub enum CurrentScreen {
     Home,
     Courses,
     TimeTable,
-    Exiting
+    Exiting,
 }
 
 impl From<CurrentScreen> for usize {
@@ -43,24 +46,24 @@ impl From<CurrentScreen> for usize {
     }
 }
 
-#[derive(Copy, Clone, Debug,PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum LoginHighlight {
     Neptun,
     Password,
     None,
 }
-
-pub struct LoginState{
-   pub neptun:String, //Display if the check is not passed through
-   pub password:String, //Display if the check is not passed through
-   pub user: Option<User> // The logged user
+#[derive(Clone)]
+pub struct LoginState {
+    pub neptun: String,     //Display if the check is not passed through
+    pub password: String,   //Display if the check is not passed through
+    pub user: Option<User>, // The logged user
 }
 impl LoginState {
-    pub fn initialize() ->  LoginState {
-        LoginState{
-            neptun:"Neptun Code".to_owned(),
+    pub fn initialize() -> LoginState {
+        LoginState {
+            neptun: "Neptun Code".to_owned(),
             password: "Password".to_owned(),
-            user: None
+            user: None,
         }
     }
 }
@@ -73,35 +76,61 @@ pub enum Error {
     ParseDBError(#[from] serde_json::Error),
 }
 #[derive(Serialize, Deserialize, Clone)]
-pub struct CourseTime { // Órák meghirdetett idopontjának struktúrája
+pub struct CourseTime {
+    // Órák meghirdetett idopontjának struktúrája
     pub day: String,
-    pub time: String
-} 
+    pub time: String,
+}
+impl fmt::Display for CourseTime {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} {}", self.day, self.time)
+    }
+}
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Course {
     pub id: usize,
-    pub code: String, // egyedi azon. név+type
+    pub code: String, // név+kód+type
     pub lecture_type: Lecture,
     pub name: String,
-    pub takes_on: Vec<CourseTime>,
+    pub takes_on: CourseTime,
     pub length: String,
 }
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct User {
     pub id: usize,
-    pub code: String,  //Neptun
+    pub code: String,     //Neptun
     pub password: String, // jó lenne hashelve
     pub name: String,
     pub role: Role,
     pub uni: String,
     pub faculty: String,
     pub major: String,
-    pub user_schedule: Vec<String>, //az órák kódját kell eltárolni hogy ha a kurzus változik akkor változzon a hivatkozással
+    pub user_schedule: Vec<usize>, //az órák id kell eltárolni hogy ha a kurzus változik akkor változzon a hivatkozással
 }
+impl User {
+    pub fn add_course(&mut self, course_id: usize) {
+        let course_id = get_course(course_id).id;
 
+        if !self.user_schedule.contains(&course_id) {
+            self.user_schedule.push(course_id);
+        }
+    }
+
+    pub fn get_course(&mut self, course_id: usize) -> Course {
+        get_course(course_id)
+    }
+}
+#[derive(Clone, Copy)]
+pub enum CourseList{
+    TakedCourses,
+    AllCourses,
+    None
+}
 pub struct App {
     pub current_screen: CurrentScreen,
     pub current_login_parameter: LoginHighlight,
+    pub current_course_list: CourseList,
     pub code_input: String,
     pub password_input: String,
 }
@@ -111,6 +140,7 @@ impl App {
         App {
             current_screen: CurrentScreen::Login,
             current_login_parameter: LoginHighlight::Neptun,
+            current_course_list: CourseList::AllCourses,
             code_input: String::new(),
             password_input: String::new(),
         }
