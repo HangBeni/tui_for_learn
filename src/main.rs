@@ -75,6 +75,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     KeyCode::Char('1') | KeyCode::Char('3') | KeyCode::Char('q') => {
                         app.current_screen = handle_navigation(key.code)
                     }
+                    //Switch course list
                     KeyCode::Tab => {
                         app.current_course_list = match app.current_course_list {
                             CourseList::TakedCourses => {
@@ -140,23 +141,22 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         if let Some(selected) = courses_list.selected() {
                             match app.current_course_list {
                                 CourseList::TakedCourses => {
-
-                            if selected >= login_state.user.clone().unwrap().user_schedule.len() - 1 {
-                                courses_list.select(Some(0));
-                            } else {
-                                courses_list.select(Some(selected + 1));
-                            }
-                                },
+                                    if selected
+                                        >= login_state.user.clone().unwrap().user_schedule.len() - 1
+                                    {
+                                        courses_list.select(Some(0));
+                                    } else {
+                                        courses_list.select(Some(selected + 1));
+                                    }
+                                }
                                 CourseList::AllCourses => {
-
-
                                     let course_length = read_courses().unwrap_or(Vec::new()).len();
                                     if selected >= course_length - 1 {
                                         courses_list.select(Some(0));
                                     } else {
                                         courses_list.select(Some(selected + 1));
                                     }
-                                },
+                                }
                                 _ => {}
                             }
                         }
