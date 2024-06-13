@@ -1,0 +1,1 @@
+//Egy olyan popup ami egy koordinátán bukkan fel
