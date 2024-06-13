@@ -32,8 +32,8 @@ pub enum CurrentScreen {
     Courses,
     TimeTable,
     Exiting,
+    GiveUpCourse,
 }
-
 impl From<CurrentScreen> for usize {
     fn from(value: CurrentScreen) -> usize {
         match value {
@@ -42,6 +42,7 @@ impl From<CurrentScreen> for usize {
             CurrentScreen::Courses => 2,
             CurrentScreen::TimeTable => 3,
             CurrentScreen::Exiting => 4,
+            CurrentScreen::GiveUpCourse => 5,
         }
     }
 }
@@ -109,23 +110,22 @@ pub struct User {
     pub user_schedule: Vec<usize>, //az órák id kell eltárolni hogy ha a kurzus változik akkor változzon a hivatkozással
 }
 impl User {
-    pub fn add_course(&mut self, course_id: usize) {
-        let course_id = get_course(course_id).id;
+    pub fn add_course(&mut self, course_index: usize) {
+        let course_id = get_course(course_index).id;
 
         if !self.user_schedule.contains(&course_id) {
             self.user_schedule.push(course_id);
         }
     }
 
-    pub fn get_course(&mut self, course_id: usize) -> Course {
-        get_course(course_id)
+    pub fn get_course(&mut self, course_index: usize) -> Course {
+        get_course(course_index)
     }
 }
 #[derive(Clone, Copy)]
-pub enum CourseList{
+pub enum CourseList {
     TakedCourses,
     AllCourses,
-    None
 }
 pub struct App {
     pub current_screen: CurrentScreen,
