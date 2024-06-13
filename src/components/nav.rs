@@ -4,9 +4,7 @@ use ratatui::{
     widgets::{Block, Tabs},
 };
 
-use crate::util::types::CurrentScreen;
-
-pub fn render_nav<'a>(screen: CurrentScreen) -> Tabs<'a> {
+pub fn render_nav<'a>(screen: usize) -> Tabs<'a> {
     let menu_titles = vec!["(1) Home", "(2) Courses", "(3) Timetable", "(q) Quit"];
 
     let menu = menu_titles.iter().map(|t| {
