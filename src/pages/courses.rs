@@ -16,7 +16,7 @@ use crate::util::{
 pub fn render_courses(f: &mut Frame, courses: &mut ListState, layout_area: Rc<[Rect]>) {
     let courses_layout = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([Constraint::Length(4), Constraint::Fill(1)].as_ref())
+        .constraints([Constraint::Length(20), Constraint::Fill(1)].as_ref())
         .split(layout_area[1]);
 
     let (list_of_courses, table, _) = courses_widget(courses, None);
@@ -54,11 +54,6 @@ pub fn render_courses_with_taked(
             },
             CourseList::AllCourses =>  {
                 f.render_stateful_widget(list_of_courses, courses_layout[0],courses);
-                f.render_widget(table, courses_layout[1]);
-                f.render_widget(taked_courses_list, courses_layout[2]);
-            },
-            CourseList::None =>  {
-                f.render_widget(list_of_courses, courses_layout[0]);
                 f.render_widget(table, courses_layout[1]);
                 f.render_widget(taked_courses_list, courses_layout[2]);
             },
@@ -151,7 +146,7 @@ fn taked_courses_list<'a>(
     let course_list: Vec<Course> = taked_courses
         .unwrap_or(&Vec::new())
         .iter()
-        .map(|id| get_course(*id))
+        .map(|id| get_course(*id-1))
         .collect();
 
     let courses = Block::default()
