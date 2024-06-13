@@ -12,6 +12,7 @@ use ratatui::{
 use tui_for_learn::util::{
     db::{read_courses, save_user},
     handlers::{handle_deletion, handle_input, handle_navigation, handle_validation},
+    helper_functions::switch_list,
     types::{App, CourseList, CurrentScreen, LoginHighlight, LoginState},
 };
 
@@ -65,7 +66,6 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     //Navigation
                     KeyCode::Char('2') | KeyCode::Char('3') | KeyCode::Char('q') => {
                         app.current_screen = handle_navigation(key.code);
-                        app.current_course_list = CourseList::None;
                     }
                     _ => {}
                 },
@@ -79,36 +79,40 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     KeyCode::Tab => {
                         app.current_course_list = match app.current_course_list {
                             CourseList::TakedCourses => {
-                                if courses_list.selected().unwrap() <= read_courses().unwrap().len()
-                                {
-                                    courses_list.select(courses_list.selected());
-                                } else {
-                                    courses_list.select(Some(0));
+                                match switch_list(
+                                    courses_list.selected(),
+                                    read_courses().unwrap_or(Vec::new()).len(),
+                                ) {
+                                    Some(selected) => {
+                                        courses_list.select(Some(selected));
+                                        CourseList::AllCourses
+                                    }
+                                    None => CourseList::AllCourses,
                                 }
-                                CourseList::AllCourses
                             }
                             CourseList::AllCourses => {
-                                if login_state.user.clone().unwrap().user_schedule.len()
-                                    >= courses_list.selected().unwrap()
-                                {
-                                    courses_list.select(courses_list.selected());
-                                } else {
-                                    courses_list.select(Some(0));
+                                match switch_list(
+                                    courses_list.selected(),
+                                    login_state.user.clone().unwrap().user_schedule.len(),
+                                ) {
+                                    Some(selected) => {
+                                        courses_list.select(Some(selected));
+                                        CourseList::TakedCourses
+                                    }
+                                    None => CourseList::AllCourses,
                                 }
-                                CourseList::TakedCourses
-                            }
-                            CourseList::None => {
-                                courses_list.select(Some(0));
-                                CourseList::AllCourses
-                            }
-                        }
+                            }                        }
                     }
                     //Add a course to the user schedule
                     KeyCode::Char('a') | KeyCode::Enter => login_state
                         .user
                         .as_mut()
                         .unwrap()
-                        .add_course(courses_list.selected().unwrap() + 1),
+                        .add_course(courses_list.selected().unwrap()),
+                    //Remove a course from the user schedule
+                    KeyCode::Char('r') => {
+                        app.current_screen = CurrentScreen::GiveUpCourse;
+                    }
                     //Navigate between courses
                     KeyCode::Up | KeyCode::Char('k') => {
                         if let Some(selected) = courses_list.selected() {
@@ -118,8 +122,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                                         courses_list.select(Some(selected - 1));
                                     } else {
                                         courses_list.select(Some(
-                                            login_state.user.clone().unwrap().user_schedule.len()
-                                                - 1,
+                                            login_state.user.clone().unwrap().user_schedule.len() - 1,
                                         ));
                                     }
                                 }
@@ -132,7 +135,6 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                                         courses_list.select(Some(course_list_length - 1));
                                     }
                                 }
-                                _ => {}
                             }
                         }
                     }
@@ -141,8 +143,8 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         if let Some(selected) = courses_list.selected() {
                             match app.current_course_list {
                                 CourseList::TakedCourses => {
-                                    if selected
-                                        >= login_state.user.clone().unwrap().user_schedule.len() - 1
+                                    if selected + 1
+                                        >= login_state.user.clone().unwrap().user_schedule.len()
                                     {
                                         courses_list.select(Some(0));
                                     } else {
@@ -151,13 +153,13 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                                 }
                                 CourseList::AllCourses => {
                                     let course_length = read_courses().unwrap_or(Vec::new()).len();
-                                    if selected >= course_length - 1 {
+                                    if selected + 1 >= course_length {
                                         courses_list.select(Some(0));
                                     } else {
                                         courses_list.select(Some(selected + 1));
                                     }
                                 }
-                                _ => {}
+                               
                             }
                         }
                     }
@@ -187,6 +189,36 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                             app.current_screen = CurrentScreen::Home;
                         }
                     }
+                },
+                CurrentScreen::GiveUpCourse => match key.code {
+                    KeyCode::Char('y') | KeyCode::Char('r') => {
+                        match switch_list(
+                            courses_list.selected(),
+                            login_state.user.clone().unwrap().user_schedule.len(),
+                        ) {
+                            Some(selected) => {
+                                login_state
+                                    .user
+                                    .as_mut()
+                                    .unwrap()
+                                    .user_schedule
+                                    .remove(selected);
+                                if login_state.user.clone().unwrap().user_schedule.len() == 0 {
+                                    app.current_course_list = CourseList::AllCourses;
+                                    courses_list.select(Some(0));
+                                }
+                                app.current_screen = CurrentScreen::Courses;
+                            }
+                            None => {
+                                app.current_course_list = CourseList::AllCourses;
+                                app.current_screen = CurrentScreen::Courses;
+                            }
+                        }
+                    }
+                    KeyCode::Char('n') => {
+                        app.current_screen = CurrentScreen::Courses;
+                    }
+                    _ => {}
                 },
             }
         }
