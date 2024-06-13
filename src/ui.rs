@@ -5,7 +5,7 @@ use ratatui::{
 };
 use tui_for_learn::{
     components::{
-        c_rect::centered_rect, exit::exit_popup, give_up::give_up_popup, nav::render_nav, status_bars::{course_help::courses_bar, movement::movement_bar, timetabel_help::timetable_bar},
+        c_rect::centered_rect, exit::exit_popup, give_up::give_up_popup, nav::render_nav, status_bars::{course_help::courses_bar, login_help::login_bar, movement::movement_bar, timetable_help::timetable_bar},
     },
     pages::{
         courses::{render_courses, render_courses_with_taked},
@@ -40,6 +40,10 @@ pub fn ui(f: &mut Frame, app: &App, courses: &mut ListState, login_state: &mut L
     match app.current_screen {
         CurrentScreen::Login => {
             render_login(f, app, login_state);
+              f.render_widget(
+                login_bar(),
+                layout_area[2]
+            );
         }
         CurrentScreen::Home => {
             f.render_widget(render_home(login_state.user.clone()), layout_area[1]);
