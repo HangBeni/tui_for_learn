@@ -16,13 +16,12 @@ pub fn read_courses() -> Result<Vec<Course>, Error> {
     Ok(parsed)
 }
 
-pub fn get_course(course_id: usize) -> Course {
+pub fn get_course(course_index: usize) -> Course {
     read_courses()
         .unwrap()
-        .iter()
-        .find(|x| x.id == course_id )
-        .unwrap()
-        .clone()
+        .get(course_index)
+        .map(|course| course.clone())
+        .expect("Get course by index")
 }
 pub fn read_users() -> Result<Vec<User>, Error> {
     let db_users = fs::read_to_string(USERS_PATH)?;
