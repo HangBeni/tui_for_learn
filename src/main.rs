@@ -39,7 +39,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 //Az app folyamatát kezeli (lap váltás, input handle, login check stb.)
 fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<bool> {
     let mut courses_list = ListState::default();
-    courses_list.select(Some(0));
+    courses_list.select_first();
 
     let mut login_state = LoginState::initialize();
 
@@ -76,6 +76,12 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         app.current_screen = handle_navigation(key.code)
                     }
                     //Switch course list
+                    KeyCode::Right => {
+                        app.current_course_list = CourseList::TakedCourses;
+                    }
+                    KeyCode::Left => {
+                        app.current_course_list = CourseList::AllCourses;
+                    }
                     KeyCode::Tab => {
                         app.current_course_list = match app.current_course_list {
                             CourseList::TakedCourses => {
@@ -101,7 +107,8 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                                     }
                                     None => CourseList::AllCourses,
                                 }
-                            }                        }
+                            }
+                        }
                     }
                     //Add a course to the user schedule
                     KeyCode::Char('a') | KeyCode::Enter => login_state
@@ -119,10 +126,11 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                             match app.current_course_list {
                                 CourseList::TakedCourses => {
                                     if selected > 0 {
-                                        courses_list.select(Some(selected - 1));
+                                        courses_list.select_previous();
                                     } else {
                                         courses_list.select(Some(
-                                            login_state.user.clone().unwrap().user_schedule.len() - 1,
+                                            login_state.user.clone().unwrap().user_schedule.len()
+                                                - 1,
                                         ));
                                     }
                                 }
@@ -130,7 +138,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                                     let course_list_length =
                                         read_courses().unwrap_or(Vec::new()).len();
                                     if selected > 0 {
-                                        courses_list.select(Some(selected - 1));
+                                        courses_list.select_previous();
                                     } else {
                                         courses_list.select(Some(course_list_length - 1));
                                     }
@@ -146,20 +154,19 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                                     if selected + 1
                                         >= login_state.user.clone().unwrap().user_schedule.len()
                                     {
-                                        courses_list.select(Some(0));
+                                        courses_list.select_first();
                                     } else {
-                                        courses_list.select(Some(selected + 1));
+                                        courses_list.select_next();
                                     }
                                 }
                                 CourseList::AllCourses => {
                                     let course_length = read_courses().unwrap_or(Vec::new()).len();
                                     if selected + 1 >= course_length {
-                                        courses_list.select(Some(0));
+                                        courses_list.select_first();
                                     } else {
-                                        courses_list.select(Some(selected + 1));
+                                        courses_list.select_next();
                                     }
                                 }
-                               
                             }
                         }
                     }
