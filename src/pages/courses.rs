@@ -30,15 +30,15 @@ pub fn render_courses_with_taked(
     courses: &mut ListState,
     layout_area: Rc<[Rect]>,
     user: &mut User,
-    selected_list: CourseList
+    selected_list: CourseList,
 ) {
     let courses_layout = Layout::default()
         .direction(Direction::Horizontal)
         .constraints(
             [
-                Constraint::Length(20),
+                Constraint::Length(30),
                 Constraint::Fill(1),
-                Constraint::Length(20),
+                Constraint::Length(30),
             ]
             .as_ref(),
         )
@@ -46,19 +46,18 @@ pub fn render_courses_with_taked(
 
     let (list_of_courses, table, taked_courses_list) =
         courses_widget(courses, Some(&user.user_schedule));
-        match selected_list {
-            CourseList::TakedCourses => {
-                f.render_widget(list_of_courses, courses_layout[0]);
-                f.render_widget(table, courses_layout[1]);
-                f.render_stateful_widget(taked_courses_list, courses_layout[2], courses);
-            },
-            CourseList::AllCourses =>  {
-                f.render_stateful_widget(list_of_courses, courses_layout[0],courses);
-                f.render_widget(table, courses_layout[1]);
-                f.render_widget(taked_courses_list, courses_layout[2]);
-            },
+    match selected_list {
+        CourseList::TakedCourses => {
+            f.render_widget(list_of_courses, courses_layout[0]);
+            f.render_widget(table, courses_layout[1]);
+            f.render_stateful_widget(taked_courses_list, courses_layout[2], courses);
         }
-
+        CourseList::AllCourses => {
+            f.render_stateful_widget(list_of_courses, courses_layout[0], courses);
+            f.render_widget(table, courses_layout[1]);
+            f.render_widget(taked_courses_list, courses_layout[2]);
+        }
+    }
 }
 
 fn courses_widget<'a>(
@@ -79,7 +78,7 @@ fn courses_widget<'a>(
     (
         available_courses_list(&course_list),
         details_table(&selected_course),
-        taked_courses_list( taked_courses),
+        taked_courses_list(taked_courses),
     )
 }
 
@@ -124,6 +123,7 @@ fn available_courses_list<'a>(course_list: &Vec<Course>) -> List<'a> {
         .map(|item| {
             ListItem::new(Line::from(vec![
                 Span::styled(item.code.to_string(), Style::default()),
+                Span::styled(" ", Style::default()),
                 Span::styled(item.takes_on.to_string(), Style::default()),
             ]))
         })
@@ -139,14 +139,11 @@ fn available_courses_list<'a>(course_list: &Vec<Course>) -> List<'a> {
     list
 }
 //Display taked courses
-fn taked_courses_list<'a>(
-    taked_courses: Option<&Vec<usize>>,
-) -> List<'a> {
-
+fn taked_courses_list<'a>(taked_courses: Option<&Vec<usize>>) -> List<'a> {
     let course_list: Vec<Course> = taked_courses
         .unwrap_or(&Vec::new())
         .iter()
-        .map(|id| get_course(*id-1))
+        .map(|id| get_course(*id - 1))
         .collect();
 
     let courses = Block::default()
@@ -160,6 +157,7 @@ fn taked_courses_list<'a>(
         .map(|item| {
             ListItem::new(Line::from(vec![
                 Span::styled(item.code.to_string(), Style::default()),
+                Span::styled(" ", Style::default()),
                 Span::styled(item.takes_on.to_string(), Style::default()),
             ]))
         })
