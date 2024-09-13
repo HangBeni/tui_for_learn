@@ -1,7 +1,7 @@
 # User Manuel 
 
 ```
-git clone 
+git clone https://github.com/HangBeni/tui_for_learn.git
 cd tui_for_learn
 cargo run
 ```
