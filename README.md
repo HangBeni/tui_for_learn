@@ -1,4 +1,4 @@
-# User Manuel 
+# User Manual 
 
 ```
 git clone https://github.com/HangBeni/tui_for_learn.git
