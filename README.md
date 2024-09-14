@@ -1,7 +1,7 @@
 # User Manual 
 
 
---- Requirements ---
+* Requirements *
   Git ( https://git-scm.com/downloads )
   Cargo ( https://www.petergirnus.com/blog/how-to-install-rust-on-windows )
 ```
