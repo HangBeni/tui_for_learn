@@ -2,7 +2,7 @@ mod ui;
 use crossterm::{
     event::{self, DisableMouseCapture, Event, KeyCode},
     execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    terminal::{self, disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen}, 
 };
 use ratatui::{
     backend::{Backend, CrosstermBackend},
@@ -17,27 +17,27 @@ use tui_for_learn::util::{
 };
 
 use crate::ui::ui;
-use std::{error::Error, io};
+use std::{error::Error, io::{self}};
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> io::Result<()> {
     //terminal setup
     enable_raw_mode()?;
-    let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen, DisableMouseCapture)?;
-    let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend)?;
-
+    // let mut stdout = io::stdout();
+    // execute!(stdout, EnterAlternateScreen, DisableMouseCapture)?;
+    // execute!(stdout, terminal::Clear(terminal::ClearType::All))?;
+    // let backend = CrosstermBackend::new(stdout);
+    // let mut terminal = Terminal::new(backend)?;
+    let mut terminal = ratatui::init();
+    terminal.clear()?;
     let mut app = App::new();
-    let _res = run_app(&mut terminal, &mut app);
-    disable_raw_mode()?;
-    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
-    terminal.show_cursor()?;
+    let res = run_app(&mut terminal, &mut app);
+    ratatui::restore();
 
-    Ok(())
+    res
 }
 
 //Az app folyamatát kezeli (lap váltás, input handle, login check stb.)
-fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<bool> {
+fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<()> {
     let mut courses_list = ListState::default();
     courses_list.select_first();
 
@@ -187,7 +187,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         if login_state.user.clone().is_some() {
                             save_user(&login_state.user.clone().unwrap())?
                         }
-                        return Ok(true);
+                        return Ok(());
                     }
                     _ => {
                         if login_state.user.is_none() {
